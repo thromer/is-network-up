@@ -1,6 +1,8 @@
 """Tests by ChatGPT"""
+import socket
 import unittest
 from unittest.mock import patch, MagicMock
+from is_network_up import Probe, TCPReachabilityProbe
 
 class TestTCPReachabilityProbe(unittest.TestCase):
     @patch("socket.create_connection")

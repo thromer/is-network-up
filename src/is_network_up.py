@@ -59,7 +59,7 @@ class MetricReporter:
         series = monitoring_v3.TimeSeries()
         series.metric.type = self.metric_type
         series.resource.type = "global"  # Use "global" if not tied to a specific GCP resource
-        series.metric.labels.update(labels)
+        series.metric.labels.update()  # TODO remove entirely I think (labels)
 
         point = monitoring_v3.Point()
         point.value.bool_value = value
