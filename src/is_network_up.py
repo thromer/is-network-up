@@ -4,6 +4,7 @@ import time
 import socket
 from typing import List, Tuple, Dict
 from abc import ABC, abstractmethod
+from datetime import datetime
 
 
 class Probe(ABC):
@@ -30,7 +31,7 @@ class TCPReachabilityProbe(Probe):
         """
         for host, port in self.targets:
             try:
-                with socket.create_connection((host, port), timeout=2):
+                with socket.create_connection((host, port), timeout=10):
                     return True, {"reachable_host": host, "reachable_port": str(port)}
             except (socket.timeout, socket.error):
                 continue
@@ -55,11 +56,15 @@ class MetricReporter:
     def report_metric(self) -> None:
         """Collects data from the probe and sends it to Cloud Monitoring."""
         value, labels = self.probe.probe()
+        if not value:
+            # Network is down, no point in reporting
+            print(f"{datetime.now()} Probe failed, metric not reported")
+            return
 
         series = monitoring_v3.TimeSeries()
         series.metric.type = self.metric_type
         series.resource.type = "global"  # Use "global" if not tied to a specific GCP resource
-        series.metric.labels.update()  # TODO remove entirely I think (labels)
+        # series.metric.labels.update()  # TODO remove entirely I think (labels)
 
         point = monitoring_v3.Point()
         point.value.bool_value = value
@@ -71,4 +76,4 @@ class MetricReporter:
         series.points.append(point)
 
         self.client.create_time_series(name=self.project_name, time_series=[series])
-        print(f"Metric reported: {value} with labels {labels}")
+        print(f"{datetime.now()} Metric reported: {value}")
